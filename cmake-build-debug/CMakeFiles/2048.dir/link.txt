@@ -1,0 +1,1 @@
+/usr/bin/c++ -g CMakeFiles/2048.dir/main.cpp.o CMakeFiles/2048.dir/io/termio.cpp.o CMakeFiles/2048.dir/game/game.cpp.o -o 2048 
