@@ -2,6 +2,7 @@
 #include <iostream>
 #include <iomanip>
 #include "termio.hpp"
+#include "../utils/matrix_views.hpp"
 
 term_io::term_io(size_t height, size_t width) : m_height(height),
 												m_width(width)
@@ -42,12 +43,12 @@ void term_io::move_cursor(size_t i, size_t j)
 void term_io::print_board(const matrix<int>& board)
 {
 	move_cursor(1, 1);
-	print_corner(board.num_cols());
+	print_corner(board.num_columns());
 	for(size_t i = 0; i < board.num_rows(); ++i)
 	{
 		for(size_t h = 0; h < m_height; ++h) //height
 			print_middle(board, i, h == (m_height - 1) / 2);
-		print_corner(board.num_cols());
+		print_corner(board.num_columns());
 	}
 	std::cout.flush();
 }
@@ -61,17 +62,17 @@ void term_io::print_corner(size_t cols)
 void term_io::print_middle(const matrix<int>& board, size_t i, bool is_num)
 {
 	std::cout << '|';
-	for(auto it = board.row_forward_begin(i); it != board.row_forward_end(i); ++it)
+    for(auto& x : row_view(&board,i))
 	{
-		if(*it == 0)
+		if(x == 0)
 			std::cout << std::setw(m_width) << ' ';
 		else
 		{
-			auto color = get_color(__builtin_popcount(*it - 1) - 1);
+			auto color = get_color(__builtin_popcount(x - 1) - 1);
 			std::cout << "\033[48;2;" << +color.r << ';' << +color.g << ';' << +color.b << 'm';
 			std::cout << std::setw(m_width);
 			if(is_num)
-				std::cout << *it;
+				std::cout << x;
 			else
 				std::cout << ' ';
 			std::cout << "\033[0m";
