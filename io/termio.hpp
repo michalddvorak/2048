@@ -9,8 +9,10 @@ class term_io : public io
 	term_io(size_t height, size_t width);
 	~term_io() override;
 	void clear_screen() override;
-    void print_menu(const ring<std::string>& menu) override;
+    void print_menu(const std::vector<std::string>& menu,size_t selected) override;
 	void exit(const matrix<int>& board, int score) override;
+    std::string get_string_from_user() override;
+    void print_str(const std::string & str) override;
     std::string handle_highscore(const matrix<int> &board, int score) override;
     void print_highscores(const std::vector<std::pair<int, std::string>> &high_scores) override;
 	void print_board(const matrix<int>& board) override;

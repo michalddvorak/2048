@@ -35,6 +35,7 @@ void term_io::restore_terminal()
 void term_io::clear_screen()
 {
     std::cout << "\033[2J";
+    move_cursor(1, 1);
 }
 
 void term_io::move_cursor(size_t i, size_t j)
@@ -126,12 +127,12 @@ term_io::rgb term_io::get_color(size_t idx)
         return {0, 0, 0};
 }
 
-void term_io::print_menu(const ring<std::string>& menu)
+void term_io::print_menu(const std::vector<std::string>& menu, size_t selected)
 {
     move_cursor(1, 1);
     size_t i = 0;
     for (auto&& menu_item: menu) {
-        if (i++ == menu.get_pos())
+        if (i++ == selected)
             std::cout << " > ";
         else
             std::cout << "   ";
@@ -144,31 +145,13 @@ std::string term_io::handle_highscore(const matrix<int>& board, int score)
     print_board(board);
     std::cout << "You scored: " << score << "!\n";
     std::cout << "Enter name: ";
-    std::string name;
-    char c;
-    while ((c = std::cin.get()) != '\n') {
-        if (c == 0x1b) { //escape sequence
-            std::cin.get();
-            std::cin.get();
-            continue;
-        }
-        if (c == 0x7f) {
-            if (!name.empty())
-                name.pop_back();
-            std::cout << "\b";
-            std::cout << " ";
-            std::cout << "\b";
-            continue;
-        }
-        std::cout << c;
-        name += c;
-    }
-    return name;
+    return get_string_from_user();
 }
 
 void term_io::print_highscores(const std::vector<std::pair<int, std::string>>& high_scores)
 {
     move_cursor(1, 1);
+    //TODO: pretty print :-)
     for (auto& [score, name]: high_scores)
         std::cout << std::setw(10) << std::left << score << name << '\n';
 }
@@ -192,11 +175,40 @@ key term_io::get_key()
     if (c == '\n')
         return {.type=EKEY::ENTER};
     if (isprint(c))
-        return {.type=EKEY::PRINTABLE, .value=(char)c};
+        return {.type=EKEY::PRINTABLE, .value=(char) c};
     return {.type=EKEY::UNKNOWN};
 }
 
 void term_io::keypress()
 {
     std::cin.get();
+}
+
+std::string term_io::get_string_from_user()
+{
+    std::string ret;
+    int c;
+    while ((c = std::cin.get()) != '\n') {
+        if (c == 0x1b) { //escape sequence
+            std::cin.get();
+            std::cin.get();
+            continue;
+        }
+        if (c == 0x7f) { //backspace
+            if (!ret.empty())
+                ret.pop_back();
+            std::cout << "\b";
+            std::cout << " ";
+            std::cout << "\b";
+            continue;
+        }
+        std::cout << (char)c;
+        ret += c;
+    }
+    return ret;
+}
+
+void term_io::print_str(const std::string& str)
+{
+    std::cout << str;
 }

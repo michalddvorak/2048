@@ -6,6 +6,7 @@
 #include "../utils/matrix.hpp"
 #include "../io/io.hpp"
 #include "Menu.hpp"
+#include "board.hpp"
 
 class game
 {
@@ -29,26 +30,11 @@ class game
     
     void save_highscores(const std::vector<std::pair<int, std::string>>& high_scores);
     
-    void put_random();
-    
-    int score() const;
-    
-    bool move_left();
-    
-    bool move_right();
-    
-    bool move_down();
-    
-    bool move_up();
-    
-    bool is_lost() const;
-    
-    //TODO separate board :)
-    
     bool exit_ = false;
     menu main_menu_;
     
-    matrix<int> m_board;
+    board<int> board_;
+    
     size_t m_range;
     size_t m_numgen;
     std::mt19937 m_gen = std::mt19937(std::random_device {}());

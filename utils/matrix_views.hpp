@@ -53,7 +53,7 @@ namespace detail
     };
 }
 
-constexpr detail::row_view_object row_view;
+inline constexpr detail::row_view_object row_view;
 
 namespace detail
 {
@@ -104,7 +104,7 @@ namespace detail
     };
 }
 
-constexpr detail::column_view_object column_view;
+inline constexpr detail::column_view_object column_view;
 
 auto rows(auto&& mat)
 {

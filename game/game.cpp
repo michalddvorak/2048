@@ -7,123 +7,61 @@
 #include "../utils/matrix_views.hpp"
 
 game::game(size_t rows, size_t cols, size_t range, size_t numgen, io& io) :
-        main_menu_(io,
-                   {
-                           {"Play",        [&]() { play_game(); }},
-                           {"High-Scores", [&]() { show_highscores(); }},
-                           {"Options",     [&]() { options(); }},
-                           {"Exit",        [&]() { exit_ = true; }}
-                   }),
-        m_board(rows, cols),
+        main_menu_(io, {
+                {constant("Play"),        [&]() { play_game(); }},
+                {constant("High-Scores"), [&]() { show_highscores(); }},
+                {constant("Options"),     [&]() { options(); }},
+                {constant("Exit"),        [&]() { exit_ = true; }}
+        }),
+        board_(rows, cols),
         m_range(range),
         m_numgen(numgen),
         m_io(io) { }
 
-template <typename InnerCompose = decltype(std::views::transform(std::identity {}))>
-bool slide(std::ranges::range auto&& rng, InnerCompose compose_inner = std::views::transform(std::identity {}))
-{
-    auto&& transformed = std::views::transform(rng,
-                                               [&](std::ranges::range auto&& r) { return merge(r | compose_inner); });
-    return std::accumulate(transformed.begin(), transformed.end(), false, std::logical_or {});
-}
-
-bool game::move_left()
-{
-    return slide(rows(m_board));
-}
-
-bool game::move_right()
-{
-    return slide(rows(m_board), std::views::reverse);
-}
-
-bool game::move_up()
-{
-    return slide(columns(m_board));
-}
-
-bool game::move_down()
-{
-    return slide(columns(m_board), std::views::reverse);
-}
-
-bool game::is_lost() const
-{
-    auto contains_two_adjacent_equal_elements = [](std::ranges::range auto&& rng)
-    {
-        auto it = std::ranges::adjacent_find(rng);
-        return it != rng.end();
-    };
-    
-    if (std::ranges::any_of(m_board, is_zero) ||
-        std::ranges::any_of(columns(m_board), contains_two_adjacent_equal_elements) ||
-        std::ranges::any_of(rows(m_board), contains_two_adjacent_equal_elements))
-        return false;
-    
-    return true;
-}
-
-int game::score() const
-{
-    return std::accumulate(m_board.begin(), m_board.end(), 0);
-}
-
 
 game::score_t game::run()
 {
-    for (auto& x: m_board)x = 0; //TODO
+    board_.reset();
     m_io.clear_screen();
-    put_random();
-    m_io.print_board(m_board);
+    board_.put_random_tiles(m_range, m_numgen, m_gen);
+    m_io.print_board(board_);
     while (true) {
         bool move = false;
         auto key = m_io.get_key();
         switch (key.type) {
-            case EKEY::LEFTARROW: move = move_left();
+            case EKEY::LEFTARROW: move = board_.move_left();
                 break;
-            case EKEY::RIGHTARROW:move = move_right();
+            case EKEY::RIGHTARROW:move = board_.move_right();
                 break;
-            case EKEY::DOWNARROW:move = move_down();
+            case EKEY::DOWNARROW:move = board_.move_down();
                 break;
-            case EKEY::UPARROW:move = move_up();
+            case EKEY::UPARROW:move = board_.move_up();
                 break;
             case EKEY::PRINTABLE:
                 switch (key.value) {
-                    case 'w':move = move_up();
+                    case 'w':move = board_.move_up();
                         break;
-                    case 'a':move = move_left();
+                    case 'a':move = board_.move_left();
                         break;
-                    case 's':move = move_down();
+                    case 's':move = board_.move_down();
                         break;
-                    case 'd':move = move_right();
+                    case 'd':move = board_.move_right();
                         break;
                     case 'x':
-                    case 'q':return score();
+                    case 'q':return board_.score();
                     default:break;
                 }
             default:break;
         }
         if (move) {
-            put_random();
-            m_io.print_board(m_board);
+            board_.put_random_tiles(m_range, m_numgen, m_gen);
+            m_io.print_board(board_);
         }
-        if (is_lost())
-            return score();
+        if (board_.is_lost())
+            return board_.score();
     }
 }
 
-void game::put_random()
-{
-    std::uniform_int_distribution<std::mt19937::result_type> distr(1, m_range);
-    for (size_t n = 0; n < m_numgen; ++n) {
-        auto zero_board = m_board | std::views::filter(is_zero);
-        auto it = take_random(zero_board, m_gen);
-        if (it == std::ranges::end(zero_board))
-            return;
-        auto bit = distr(m_gen);
-        *it = 1 << bit;
-    }
-}
 
 std::vector<std::pair<int, std::string>> game::load_highscores()
 {
@@ -152,7 +90,7 @@ void game::save_highscores(const std::vector<std::pair<int, std::string>>& high_
 void game::play_game()
 {
     int score = run();
-    std::string name = m_io.handle_highscore(m_board, score);
+    std::string name = m_io.handle_highscore(board_, score);
     std::vector<std::pair<int, std::string>> high_scores = load_highscores();
     high_scores.push_back({score, name});
     std::ranges::sort(high_scores, std::greater {});
@@ -169,14 +107,33 @@ void game::main_loop()
 
 void game::show_highscores()
 {
+    m_io.clear_screen();
     m_io.print_highscores(load_highscores());
+    m_io.print_str("Press any key to return back to the main menu.");
     m_io.keypress();
 }
 
 void game::options()
 {
-    //menu options_menu;
-    m_io.clear_screen();
-    std::cout << "This feature is not implemented yet.";
-    m_io.keypress();
+    bool exit = false;
+    using namespace std::string_literals;
+    menu options_menu(m_io,
+                      {{[&]() { return "Number of generated tiles: "s + std::to_string(m_numgen); }, [&]() {
+                          m_io.clear_screen();
+                          m_io.print_str("Enter new value for number of generated tiles (current = "s + std::to_string(m_numgen) + "): "s);
+                          auto new_value = parse<size_t>(m_io.get_string_from_user());
+                          m_io.clear_screen();
+                          if(!new_value)
+                              m_io.print_str("Could not parse number.");
+                          else {
+                              m_numgen = *new_value;
+                              m_io.print_str("New value for generated tiles: "s + std::to_string(*new_value));
+                          }
+                          m_io.print_str("\nPress any key to continue.");
+                          m_io.keypress();
+                      }},
+                       //TODO
+                       {[&]() { return "Range of generated tiles: "s + std::to_string(m_range); }, []() { }},
+                       {constant("Back"),  [&]() { exit = true; }}});
+    options_menu.loop(exit);
 }
