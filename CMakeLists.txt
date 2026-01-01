@@ -6,7 +6,17 @@ set(CMAKE_CXX_STANDARD 20)
 
 add_executable(2048 main.cpp io/io.hpp io/termio.cpp io/termio.hpp utils/matrix.hpp game/game.cpp game/game.hpp utils/utils.hpp
         utils/matrix_views.hpp
-        utils/strided_iterator.hpp)
+        utils/strided_iterator.hpp
+        utils/ring.hpp
+        game/board.cpp
+        game/board.hpp
+        game/Menu.cpp
+        game/Menu.hpp)
 add_executable(test test.cpp utils/matrix.hpp utils/utils.hpp
         utils/matrix_views.hpp
-        utils/strided_iterator.hpp)
+        utils/strided_iterator.hpp
+        utils/ring.hpp
+        game/board.cpp
+        game/board.hpp
+        game/Menu.cpp
+        game/Menu.hpp)

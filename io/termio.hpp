@@ -6,13 +6,16 @@
 class term_io : public io
 {
  public:
-	term_io(size_t height = 3, size_t width = 4);
+	term_io(size_t height, size_t width);
 	~term_io() override;
 	void clear_screen() override;
+    void print_menu(const ring<std::string>& menu) override;
 	void exit(const matrix<int>& board, int score) override;
-	void handle_loss(const matrix<int>& board, int score) override;
+    std::string handle_highscore(const matrix<int> &board, int score) override;
+    void print_highscores(const std::vector<std::pair<int, std::string>> &high_scores) override;
 	void print_board(const matrix<int>& board) override;
-	int getc() override;
+    key get_key() override;
+    void keypress() override;
  private:
 	struct rgb
 	{

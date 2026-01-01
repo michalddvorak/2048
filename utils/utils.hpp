@@ -1,6 +1,8 @@
 #include <ranges>
 #include <algorithm>
 
+auto is_zero = [](auto x) { return x == 0; };
+
 /**
  * @brief Performs merging of range [inbegin,inend) into range [outbegin,outend) in 2048-like fashion
  * @example [2,2,2,2] -> [4,4,0,0]
@@ -47,7 +49,18 @@ bool merge(IOIt begin, IOIt end)
     return merge(begin, end, begin, end);
 }
 
-bool merge(auto&& rng)
+bool merge(std::ranges::range auto&& rng)
 {
-    return merge(std::ranges::begin(rng),std::ranges::end(rng));
+    return merge(std::ranges::begin(rng), std::ranges::end(rng));
+}
+
+auto take_random(std::ranges::range auto&& rng, auto&& gen)
+{
+    auto it = std::ranges::begin(rng);
+    auto ret = it;
+    size_t len = 0;
+    for (; it != std::ranges::end(rng); ++it)
+        if (gen() % ++len == 0)
+            ret = it;
+    return ret;
 }
