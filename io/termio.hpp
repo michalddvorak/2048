@@ -9,7 +9,7 @@ class term_io : public io
 	term_io(size_t height, size_t width);
 	~term_io() override;
 	void clear_screen() override;
-    void print_menu(const std::vector<std::string>& menu,size_t selected) override;
+    void print_menu(const std::vector<std::string>& menu,size_t selected,const std::string& header="") override;
 	void exit(const matrix<int>& board, int score) override;
     std::string get_string_from_user() override;
     void print_str(const std::string & str) override;

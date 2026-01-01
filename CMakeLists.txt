@@ -8,11 +8,11 @@ add_executable(2048 main.cpp io/io.hpp io/termio.cpp io/termio.hpp utils/matrix.
         utils/matrix_views.hpp
         utils/strided_iterator.hpp
         game/board.hpp
-        game/Menu.cpp
-        game/Menu.hpp)
+        game/menu.cpp
+        game/menu.hpp)
 add_executable(test test.cpp utils/matrix.hpp utils/utils.hpp
         utils/matrix_views.hpp
         utils/strided_iterator.hpp
         game/board.hpp
-        game/Menu.cpp
-        game/Menu.hpp)
+        game/menu.cpp
+        game/menu.hpp)

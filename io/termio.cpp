@@ -127,9 +127,10 @@ term_io::rgb term_io::get_color(size_t idx)
         return {0, 0, 0};
 }
 
-void term_io::print_menu(const std::vector<std::string>& menu, size_t selected)
+void term_io::print_menu(const std::vector<std::string>& menu, size_t selected, const std::string& header)
 {
     move_cursor(1, 1);
+    std::cout << header << '\n';
     size_t i = 0;
     for (auto&& menu_item: menu) {
         if (i++ == selected)
@@ -186,25 +187,20 @@ void term_io::keypress()
 
 std::string term_io::get_string_from_user()
 {
+    struct termios old_ttystate;
+    tcgetattr(STDIN_FILENO, &old_ttystate); //store old ttystate
+    struct termios ttystate;
+    tcgetattr(STDIN_FILENO, &ttystate);
+    ttystate.c_lflag |= ICANON; //disable canonical mode
+    ttystate.c_cc[VMIN] = 255; //react on 1 character
+    ttystate.c_lflag |= ECHO; //don't echo pressed characters
+    tcsetattr(STDIN_FILENO, TCSANOW, &ttystate);
+    
     std::string ret;
-    int c;
-    while ((c = std::cin.get()) != '\n') {
-        if (c == 0x1b) { //escape sequence
-            std::cin.get();
-            std::cin.get();
-            continue;
-        }
-        if (c == 0x7f) { //backspace
-            if (!ret.empty())
-                ret.pop_back();
-            std::cout << "\b";
-            std::cout << " ";
-            std::cout << "\b";
-            continue;
-        }
-        std::cout << (char)c;
-        ret += c;
-    }
+    std::cin >> ret;
+    while (std::cin.get() != '\n');
+    
+    tcsetattr(STDIN_FILENO, TCSANOW, &old_ttystate);
     return ret;
 }
 

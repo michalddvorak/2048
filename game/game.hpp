@@ -5,7 +5,7 @@
 #include <iostream>
 #include "../utils/matrix.hpp"
 #include "../io/io.hpp"
-#include "Menu.hpp"
+#include "menu.hpp"
 #include "board.hpp"
 
 class game
@@ -13,7 +13,7 @@ class game
   public:
     using score_t = int;
     
-    game(size_t rows, size_t cols, size_t range, size_t numgen, io& io);
+    game(size_t rows, size_t cols, size_t range, size_t numgen, unsigned int seed, io& io);
     
     void main_loop();
     
@@ -32,11 +32,9 @@ class game
     
     bool exit_ = false;
     menu main_menu_;
-    
     board<int> board_;
-    
     size_t m_range;
     size_t m_numgen;
-    std::mt19937 m_gen = std::mt19937(std::random_device {}());
+    std::mt19937 m_gen;
     io& m_io;
 };

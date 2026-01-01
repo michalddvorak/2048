@@ -27,7 +27,7 @@ class io
     
     virtual void clear_screen() = 0;
     
-    virtual void print_menu(const std::vector<std::string>& menu, size_t selected) = 0;
+    virtual void print_menu(const std::vector<std::string>& menu, size_t selected,const std::string& header="") = 0;
     
     virtual void print_board(const matrix<int>& board) = 0;
     

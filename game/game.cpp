@@ -6,16 +6,25 @@
 #include "../utils/utils.hpp"
 #include "../utils/matrix_views.hpp"
 
-game::game(size_t rows, size_t cols, size_t range, size_t numgen, io& io) :
+game::game(size_t rows, size_t cols, size_t range, size_t numgen, unsigned int seed, io& io) :
         main_menu_(io, {
-                {constant("Play"),        [&]() { play_game(); }},
-                {constant("High-Scores"), [&]() { show_highscores(); }},
-                {constant("Options"),     [&]() { options(); }},
-                {constant("Exit"),        [&]() { exit_ = true; }}
-        }),
+                           {constant("Play"),        [&]() { play_game(); }},
+                           {constant("High-Scores"), [&]() { show_highscores(); }},
+                           {constant("Options"),     [&]() { options(); }},
+                           {constant("Exit"),        [&]() { exit_ = true; }}
+                   },
+                   R"(
+  ___     ___    _  _     ___
+ |__ \   / _ \  | || |   / _ \
+    ) | | | | | | || |_ | (_) |
+   / /  | | | | |__   _| | _ |
+  / /_  | |_| |    | |  | (_) |
+ |____|  \___/     |_|   \___/
+)"),
         board_(rows, cols),
         m_range(range),
         m_numgen(numgen),
+        m_gen(seed),
         m_io(io) { }
 
 
@@ -94,8 +103,8 @@ void game::play_game()
     std::vector<std::pair<int, std::string>> high_scores = load_highscores();
     high_scores.push_back({score, name});
     std::ranges::sort(high_scores, std::greater {});
-    if (high_scores.size() > 10)
-        high_scores.resize(10); //top 10 ?
+    /*if (high_scores.size() > 10)
+        high_scores.resize(10); //top 10 ?*/
     save_highscores(high_scores);
 }
 
@@ -118,22 +127,34 @@ void game::options()
     bool exit = false;
     using namespace std::string_literals;
     menu options_menu(m_io,
-                      {{[&]() { return "Number of generated tiles: "s + std::to_string(m_numgen); }, [&]() {
-                          m_io.clear_screen();
-                          m_io.print_str("Enter new value for number of generated tiles (current = "s + std::to_string(m_numgen) + "): "s);
-                          auto new_value = parse<size_t>(m_io.get_string_from_user());
-                          m_io.clear_screen();
-                          if(!new_value)
-                              m_io.print_str("Could not parse number.");
-                          else {
-                              m_numgen = *new_value;
-                              m_io.print_str("New value for generated tiles: "s + std::to_string(*new_value));
-                          }
-                          m_io.print_str("\nPress any key to continue.");
-                          m_io.keypress();
-                      }},
-                       //TODO
-                       {[&]() { return "Range of generated tiles: "s + std::to_string(m_range); }, []() { }},
-                       {constant("Back"),  [&]() { exit = true; }}});
+                      {{[&]() { return "Number of generated tiles: "s + std::to_string(m_numgen); }, [&]()
+                                                                                                     {
+                                                                                                         m_io.clear_screen();
+                                                                                                         m_io.print_str(
+                                                                                                                 "Enter new value for number of generated tiles (current = "s +
+                                                                                                                 std::to_string(
+                                                                                                                         m_numgen) +
+                                                                                                                 "): "s);
+                                                                                                         auto new_value = parse<size_t>(
+                                                                                                                 m_io.get_string_from_user());
+                                                                                                         m_io.clear_screen();
+                                                                                                         if (!new_value)
+                                                                                                             m_io.print_str(
+                                                                                                                     "Could not parse number.");
+                                                                                                         else {
+                                                                                                             m_numgen = *new_value;
+                                                                                                             m_io.print_str(
+                                                                                                                     "New value for generated tiles: "s +
+                                                                                                                     std::to_string(
+                                                                                                                             *new_value));
+                                                                                                         }
+                                                                                                         m_io.print_str(
+                                                                                                                 "\nPress any key to continue.");
+                                                                                                         m_io.keypress();
+                                                                                                     }},
+                              //TODO
+                       {[&]() { return "Range of generated tiles: "s + std::to_string(m_range); },   []() { }},
+                       {constant(
+                               "Back"),                                                              [&]() { exit = true; }}});
     options_menu.loop(exit);
 }
