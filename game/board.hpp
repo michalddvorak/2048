@@ -65,14 +65,15 @@ struct board : public matrix<T>
         
         return true;
     }
-    
+    //TODO: score can be modified by a function, pass it, default is identity
     [[nodiscard]] T score() const
     {
+        //auto transformed = *this | std::views::transform()
         return std::accumulate(this->begin(), this->end(), T(0));
     }
     
     /**
-     * Puts @num_tiles random tiles of values choosen randomly from the set {1 << 1, 1 << 2, ..., 1 << @tiles_range}
+     * Puts @num_tiles random tiles of values choosen randomly with repetitions from the set {1 << 1, 1 << 2, ..., 1 << @tiles_range}
      * @param tiles_range
      * @param num_tiles
      * @param generator

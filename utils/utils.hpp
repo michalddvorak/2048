@@ -97,37 +97,40 @@ inline constexpr detail::fold_left_object fold_left;
 
 //----------
 
-template <typename Fn>
-class with_result_of_t
+namespace detail
 {
-  public:
-    using result_type = std::invoke_result_t<Fn&>;
-    
-    explicit with_result_of_t(Fn fn) : m_fn(std::move(fn)) { }
-    
-    operator result_type() { return std::invoke(m_fn); }
-  
-  private:
-    Fn m_fn;
-};
+    template <typename Fn>
+    class with_result_of_object
+    {
+      public:
+        using result_type = std::invoke_result_t<Fn&>;
+        
+        explicit with_result_of_object(Fn fn) : m_fn(std::move(fn)) { }
+        
+        operator result_type() { return std::invoke(m_fn); }
+      
+      private:
+        Fn m_fn;
+    };
+}
 
 template <typename Fn>
 auto with_result_of(Fn&& fn)
 {
-    return with_result_of_t<std::decay_t<Fn>>(std::forward<Fn>(fn));
+    return detail::with_result_of_object<std::decay_t<Fn>>(std::forward<Fn>(fn));
 }
 
 auto constant(auto x)
 {
-    return [=]() { return x; };
+    return [x = std::move(x)]() { return x; };
 }
 
-template<typename T>
+template <typename T>
 std::optional<T> parse(const std::string& s)
 {
     std::stringstream ss(s);
     T x;
-    if(!(ss >> x))
+    if (!(ss >> x))
         return std::nullopt;
     return x;
 }

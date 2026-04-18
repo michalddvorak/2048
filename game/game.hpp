@@ -7,13 +7,20 @@
 #include "../io/io.hpp"
 #include "menu.hpp"
 #include "board.hpp"
+#include "highscore.hpp"
 
 class game
 {
   public:
     using score_t = int;
     
-    game(size_t rows, size_t cols, size_t range, size_t numgen, unsigned int seed, io& io);
+    game(size_t num_rows,
+         size_t num_cols,
+         size_t generated_tiles_range,
+         size_t number_of_generated_tiles,
+         unsigned int rng_seed,
+         io& io,
+         std::string highscore_filename);
     
     void main_loop();
     
@@ -24,17 +31,13 @@ class game
     void options();
   
   private:
-    score_t run();
-    
-    std::vector<std::pair<int, std::string>> load_highscores();
-    
-    void save_highscores(const std::vector<std::pair<int, std::string>>& high_scores);
-    
+    score_t run_game();
+    highscore<score_t> highscore_;
     bool exit_ = false;
-    menu main_menu_;
+    menu<modulo_counter_circular<size_t>> main_menu_;
     board<int> board_;
-    size_t m_range;
-    size_t m_numgen;
-    std::mt19937 m_gen;
-    io& m_io;
+    size_t generated_tiles_range_;
+    size_t number_of_generated_tiles_;
+    std::mt19937 gen_;
+    io& io_;
 };

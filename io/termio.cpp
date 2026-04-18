@@ -1,6 +1,7 @@
 #include <unistd.h>
 #include <iostream>
 #include <iomanip>
+#include <sys/ioctl.h>
 #include "termio.hpp"
 #include "../utils/matrix_views.hpp"
 
@@ -34,7 +35,11 @@ void term_io::restore_terminal()
 
 void term_io::clear_screen()
 {
-    std::cout << "\033[2J";
+    move_cursor(1, 1);
+    winsize wsz;
+    ioctl(0, TIOCGWINSZ, &wsz);
+    for (size_t i = 0; i < wsz.ws_row; ++i, std::cout << '\n')
+        for (size_t j = 0; j < wsz.ws_col; ++j, std::cout << ' ');
     move_cursor(1, 1);
 }
 
@@ -68,11 +73,11 @@ void term_io::print_middle(const matrix<int>& board, size_t i, bool is_num)
     std::cout << '|';
     for (auto& x: row_view(&board, i)) {
         if (x == 0)
-            std::cout << std::setw(m_width) << ' ';
+            std::cout << std::setw(static_cast<int>(m_width)) << ' ';
         else {
             auto color = get_color(__builtin_popcount(x - 1) - 1);
             std::cout << "\033[48;2;" << +color.r << ';' << +color.g << ';' << +color.b << 'm';
-            std::cout << std::setw(m_width);
+            std::cout << std::setw(static_cast<int>(m_width));
             if (is_num)
                 std::cout << x;
             else
@@ -84,28 +89,21 @@ void term_io::print_middle(const matrix<int>& board, size_t i, bool is_num)
     std::cout << '\n';
 }
 
-void term_io::exit(const matrix<int>& board, int score)
-{
-    clear_screen();
-    print_board(board);
-    std::cout << "exited, your score: " << score << std::endl;
-}
-
 term_io::rgb term_io::get_color(size_t idx)
 {
-    const static rgb LIGHT_BLUE = {66, 135, 245};
-    const static rgb DARK_BLUE = {1, 49, 125};
-    const static rgb BROWN = {125, 65, 1};
-    const static rgb YELLOW = {247, 210, 22};
-    const static rgb LIGHT_GREEN = {146, 247, 22};
-    const static rgb TEAL = {22, 247, 202};
-    const static rgb PURPLE = {191, 22, 247};
-    const static rgb LIGHT_RED = {191, 86, 86};
-    const static rgb PINK = {255, 0, 204};
-    const static rgb DARK_GREEN = {9, 117, 4};
-    const static rgb ORANGE = {255, 170, 0};
-    const static rgb DARK_PURPLE = {70, 8, 94};
-    const static rgb REDRANGE = {235, 87, 38};
+    [[maybe_unused]] const static rgb LIGHT_BLUE = {66, 135, 245};
+    [[maybe_unused]] const static rgb DARK_BLUE = {1, 49, 125};
+    [[maybe_unused]] const static rgb BROWN = {125, 65, 1};
+    [[maybe_unused]] const static rgb YELLOW = {247, 210, 22};
+    [[maybe_unused]] const static rgb LIGHT_GREEN = {146, 247, 22};
+    [[maybe_unused]] const static rgb TEAL = {22, 247, 202};
+    [[maybe_unused]] const static rgb PURPLE = {191, 22, 247};
+    [[maybe_unused]] const static rgb LIGHT_RED = {191, 86, 86};
+    [[maybe_unused]] const static rgb PINK = {255, 0, 204};
+    [[maybe_unused]] const static rgb DARK_GREEN = {9, 117, 4};
+    [[maybe_unused]] const static rgb ORANGE = {255, 170, 0};
+    [[maybe_unused]] const static rgb DARK_PURPLE = {70, 8, 94};
+    [[maybe_unused]] const static rgb REDRANGE = {235, 87, 38};
     
     const static std::array colors =
             {
@@ -130,14 +128,16 @@ term_io::rgb term_io::get_color(size_t idx)
 void term_io::print_menu(const std::vector<std::string>& menu, size_t selected, const std::string& header)
 {
     move_cursor(1, 1);
-    std::cout << header << '\n';
+    std::cout << header;
+    //C++23's std::views::enumerate would be nice here
     size_t i = 0;
     for (auto&& menu_item: menu) {
-        if (i++ == selected)
+        if (i == selected)
             std::cout << " > ";
         else
             std::cout << "   ";
         std::cout << menu_item << '\n';
+        ++i;
     }
 }
 
@@ -161,6 +161,7 @@ key term_io::get_key()
 {
     int c = std::cin.get();
     if (c == 0x1b) {
+        //TODO add some cheat codes here :PP ?
         int cc = std::cin.get();
         if (cc == 0x5b) {
             int ccc = std::cin.get();
@@ -191,9 +192,8 @@ std::string term_io::get_string_from_user()
     tcgetattr(STDIN_FILENO, &old_ttystate); //store old ttystate
     struct termios ttystate;
     tcgetattr(STDIN_FILENO, &ttystate);
-    ttystate.c_lflag |= ICANON; //disable canonical mode
-    ttystate.c_cc[VMIN] = 255; //react on 1 character
-    ttystate.c_lflag |= ECHO; //don't echo pressed characters
+    ttystate.c_lflag |= ICANON; //enable canonical mode
+    ttystate.c_lflag |= ECHO; //do echo pressed characters
     tcsetattr(STDIN_FILENO, TCSANOW, &ttystate);
     
     std::string ret;

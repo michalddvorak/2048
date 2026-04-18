@@ -16,7 +16,7 @@ enum class EKEY : int
 struct key
 {
     EKEY type;
-    char value;
+    char value = '\0';
 };
 
 
@@ -39,7 +39,6 @@ class io
     
     virtual void print_str(const std::string& str) = 0;
     
-    virtual void exit(const matrix<int>& board, int score) = 0;
     
     virtual key get_key() = 0;
     

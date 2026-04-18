@@ -10,12 +10,13 @@ class term_io : public io
 	~term_io() override;
 	void clear_screen() override;
     void print_menu(const std::vector<std::string>& menu,size_t selected,const std::string& header="") override;
-	void exit(const matrix<int>& board, int score) override;
     std::string get_string_from_user() override;
     void print_str(const std::string & str) override;
     std::string handle_highscore(const matrix<int> &board, int score) override;
     void print_highscores(const std::vector<std::pair<int, std::string>> &high_scores) override;
 	void print_board(const matrix<int>& board) override;
+    //Better naming !! wait_for_keypress()
+    //TODO implement kbhit()
     key get_key() override;
     void keypress() override;
  private:

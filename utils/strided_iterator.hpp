@@ -47,7 +47,6 @@ class strided_iterator
         return tmp;
     }
     
-    // Arithmetic
     strided_iterator& operator+=(difference_type n) noexcept
     {
         ptr_ += n * stride_;
